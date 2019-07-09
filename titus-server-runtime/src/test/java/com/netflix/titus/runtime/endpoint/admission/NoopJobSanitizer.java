@@ -16,43 +16,18 @@
 
 package com.netflix.titus.runtime.endpoint.admission;
 
-import java.util.Set;
-
 import com.netflix.titus.api.jobmanager.model.job.JobDescriptor;
-import com.netflix.titus.common.model.sanitizer.ValidationError;
 import reactor.core.publisher.Mono;
 
-/**
- * This validator never completes.  It is used to test validation in the face of unresponsive service calls.
- */
-class NeverJobValidator implements AdmissionValidator<JobDescriptor>, AdmissionSanitizer<JobDescriptor, JobDescriptor> {
-    private final ValidationError.Type errorType;
-
-    public NeverJobValidator() {
-        this(ValidationError.Type.HARD);
-    }
-
-    NeverJobValidator(ValidationError.Type errorType) {
-        this.errorType = errorType;
-    }
-
-    @Override
-    public Mono<Set<ValidationError>> validate(JobDescriptor entity) {
-        return Mono.never();
-    }
+class NoopJobSanitizer implements AdmissionSanitizer<JobDescriptor, JobDescriptor> {
 
     @Override
     public Mono<JobDescriptor> sanitize(JobDescriptor entity) {
-        return Mono.never();
+        return Mono.empty();
     }
 
     @Override
     public JobDescriptor apply(JobDescriptor entity, JobDescriptor update) {
         throw new IllegalStateException("never called");
-    }
-
-    @Override
-    public ValidationError.Type getErrorType() {
-        return errorType;
     }
 }

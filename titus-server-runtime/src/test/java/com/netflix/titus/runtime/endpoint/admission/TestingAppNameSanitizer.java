@@ -16,42 +16,35 @@
 
 package com.netflix.titus.runtime.endpoint.admission;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.netflix.titus.api.jobmanager.model.job.JobDescriptor;
-import com.netflix.titus.common.model.sanitizer.ValidationError;
 import reactor.core.publisher.Mono;
 
 /**
  * This {@link AdmissionValidator} implementation ensures a job's appname matches a specific
  * string. It is only used for testing purposes.
  */
-class TestingAppNameSanitizer implements AdmissionValidator<JobDescriptor>, AdmissionSanitizer<JobDescriptor> {
-    final static String desiredAppName = "desiredAppName";
-    private static final String ERR_FIELD = "fail-field";
-    private static final String ERR_DESCRIPTION =
-            String.format("The job does not have desired appname %s", desiredAppName);
+class TestingAppNameSanitizer implements AdmissionSanitizer<JobDescriptor, String> {
+    private final String desiredAppName;
 
-    @Override
-    public Mono<Set<ValidationError>> validate(JobDescriptor entity) {
-        if (entity.getApplicationName().equals(desiredAppName)) {
-            return Mono.just(Collections.emptySet());
-        }
-        final ValidationError error = new ValidationError(ERR_FIELD, ERR_DESCRIPTION);
-        return Mono.just(new HashSet<>(Collections.singletonList(error)));
+    TestingAppNameSanitizer() {
+        this("desiredAppName");
+    }
+
+    TestingAppNameSanitizer(String desiredAppName) {
+        this.desiredAppName = desiredAppName;
     }
 
     @Override
-    public Mono<JobDescriptor> sanitize(JobDescriptor entity) {
-        return Mono.just(entity.toBuilder()
-                .withApplicationName(desiredAppName)
-                .build());
+    public Mono<String> sanitize(JobDescriptor entity) {
+        return Mono.just(desiredAppName);
     }
 
     @Override
-    public ValidationError.Type getErrorType() {
-        return ValidationError.Type.HARD;
+    public JobDescriptor apply(JobDescriptor entity, String update) {
+        return entity.toBuilder().withApplicationName(update).build();
+    }
+
+    public String getDesiredAppName() {
+        return desiredAppName;
     }
 }
